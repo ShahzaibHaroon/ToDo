@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="model"
+            type="com.app.todolist.model.ItemModel" />
+
+    </data>
+
+    <com.chauthai.swipereveallayout.SwipeRevealLayout
+        android:id="@+id/srLayout"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_45sdp"
+        android:descendantFocusability="blocksDescendants"
+        app:dragEdge="right"
+        app:mode="same_level">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent">
+
+            <RelativeLayout
+                android:id="@+id/rlDone"
+                android:layout_width="@dimen/_100sdp"
+                android:layout_height="match_parent"
+                android:background="@color/green"
+                app:visibleGone="@{model.itemStatus != 1}">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:text="Done"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/_15ssp" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rlDelete"
+                android:layout_width="@dimen/_100sdp"
+                android:layout_height="match_parent"
+                android:background="@color/red"
+                app:visibleGone="@{model.itemStatus != 1}">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:text="Delete"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/_15ssp" />
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/rlMain"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/tvName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="@dimen/_15sdp"
+                android:layout_marginRight="@dimen/_15sdp"
+                android:layout_toLeftOf="@+id/tvPrice"
+                android:singleLine="true"
+                android:text="@{model.itemName}"
+                android:textColor="@color/black"
+                android:textSize="@dimen/_15ssp" />
+
+            <TextView
+                android:id="@+id/tvPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="@dimen/_15sdp"
+                android:singleLine="true"
+                android:text='@{"$" + String.valueOf(model.itemPrice)}'
+                android:textColor="@color/black"
+                android:textSize="@dimen/_15ssp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/_1sdp"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/_12sdp"
+                android:layout_marginEnd="@dimen/_12sdp"
+                android:background="@color/red"
+                android:visibility="gone"
+                app:visibleGone="@{model.itemStatus == 1}" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/_1sdp"
+                android:layout_alignParentBottom="true"
+                android:background="@color/gray" />
+
+        </RelativeLayout>
+
+    </com.chauthai.swipereveallayout.SwipeRevealLayout>
+
+</layout>

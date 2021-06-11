@@ -31,7 +31,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, "MyDB", null, 1) {
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
     }
 
-    fun createList(item: ListModel, listItems: ArrayList<ItemModel>) {
+    fun createList(item: ListModel) {
         val db = this.writableDatabase
 
         val cv = ContentValues()
@@ -39,14 +39,17 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, "MyDB", null, 1) {
         cv.put(LIST_COL_STATUS, item.itemStatus)
 
         val res = db.insert(LIST_TABLE_NAME, null, cv)
-        if (res != (-1).toLong()) {
-            for (i in 0 until listItems.size) {
-                val cv1 = ContentValues()
-                cv1.put(ITEM_COL_NAME, listItems[i].itemName)
-                cv1.put(ITEM_COL_PRICE, listItems[i].itemPrice)
-                cv1.put(ITEM_COL_STATUS, listItems[i].itemStatus)
-                db.insert(ITEM_TABLE_NAME, null, cv1)
-            }
+    }
+
+    fun createListItem(listID: Int, listItems: ArrayList<ItemModel>){
+        val db = this.writableDatabase
+        for (i in 0 until listItems.size) {
+            val cv1 = ContentValues()
+            cv1.put(ITEM_COL_NAME, listItems[i].itemName)
+            cv1.put(ITEM_COL_PRICE, listItems[i].itemPrice)
+            cv1.put(ITEM_COL_STATUS, listItems[i].itemStatus)
+            cv1.put(ITEM_COL_LIST_ID, listID)
+            db.insert(ITEM_TABLE_NAME, null, cv1)
         }
     }
 
@@ -81,7 +84,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, "MyDB", null, 1) {
     fun getItems(priorityId: Int): ArrayList<ItemModel> {
         val list = ArrayList<ItemModel>()
         val db = this.readableDatabase
-        val query = "Select * from $ITEM_TABLE_NAME"
+        val query = "Select * from $ITEM_TABLE_NAME where $ITEM_COL_LIST_ID = $priorityId"
         val res = db.rawQuery(query, null)
         if (res.moveToFirst()) {
             do {
@@ -106,11 +109,11 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, "MyDB", null, 1) {
         db.close()
     }
 
-    fun updateStatus(itemID: Int, priorityId: Int){
+    fun updateStatus(itemID: Int, priorityId: Int) {
         val db = this.writableDatabase
         val cv = ContentValues()
         cv.put(ITEM_COL_STATUS, 1)
-        db.update(ITEM_TABLE_NAME, cv, "$ITEM_COL_ID =?", arrayOf(itemID.toString()))
+        db.update(ITEM_TABLE_NAME, cv, "$ITEM_COL_ID = ?", arrayOf(itemID.toString()))
         db.close()
     }
 
@@ -129,6 +132,15 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, "MyDB", null, 1) {
         val db = this.writableDatabase
         val cv = ContentValues()
         cv.put(LIST_COL_STATUS, 1)
+
+        db.update(LIST_TABLE_NAME, cv, "$LIST_COL_PRIORITY =?", arrayOf(listID.toString()))
+        db.close()
+    }
+
+    fun updateListName(listName: String, listID: Int) {
+        val db = this.writableDatabase
+        val cv = ContentValues()
+        cv.put(LIST_COL_NAME, listName)
 
         db.update(LIST_TABLE_NAME, cv, "$LIST_COL_PRIORITY =?", arrayOf(listID.toString()))
         db.close()

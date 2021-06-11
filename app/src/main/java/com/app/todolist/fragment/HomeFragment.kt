@@ -43,18 +43,23 @@ class HomeFragment : BaseFragment(), View.OnClickListener, ListItemAdapter.IItem
     }
 
     private fun getList() {
+        binding.btnMarkAll.visibility = View.GONE
+        priorityId = 0
+        isUpdate = false
         val list = dbHelper.getList()
         binding.pbLoading.visibility = View.GONE
         if (list.isEmpty()) {
             binding.isData = false
+            binding.tvName.text = ""
         }
         else {
-            list.sortBy { it.priority }
-            if (list.any { it.itemStatus == 0 }) {
+            val temp = list.sortedByDescending { it.priority }
+            if (temp.any { it.itemStatus == 0 }) {
                 binding.isData = true
-                binding.tvName.text = list.filter { it.itemStatus == 0 }[0].listName
-                priorityId = list.filter { it.itemStatus == 0 }[0].priority
-                name = list.filter { it.itemStatus == 0 }[0].listName
+                binding.btnMarkAll.visibility = View.VISIBLE
+                binding.tvName.text = temp.filter { it.itemStatus == 0 }[0].listName
+                priorityId = temp.filter { it.itemStatus == 0 }[0].priority
+                name = temp.filter { it.itemStatus == 0 }[0].listName
                 mList.clear()
                 mList.addAll(dbHelper.getItems(priorityId).filter { it.priorityListId == priorityId })
                 setAdapter()
@@ -62,6 +67,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, ListItemAdapter.IItem
             }
             else {
                 binding.isData = false
+                binding.tvName.text = ""
             }
         }
     }
@@ -76,6 +82,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, ListItemAdapter.IItem
 
     private fun setListener() {
         binding.rlAddItem.setOnClickListener(this)
+        binding.btnMarkAll.setOnClickListener(this)
     }
 
     override fun onClick(v: View?) {
@@ -83,17 +90,36 @@ class HomeFragment : BaseFragment(), View.OnClickListener, ListItemAdapter.IItem
             R.id.rlAddItem -> {
                 callFragmentWithReplace(R.id.mainContainer, CreateEditListFragment.newInstance(priorityId, name, isUpdate, false), "CreateEditListFragment")
             }
+            R.id.btnMarkAll -> markAllCompleted()
         }
+    }
+
+    private fun markAllCompleted() {
+        for (i in 0 until mList.size) {
+            mList[i].itemStatus = 1
+            dbHelper.updateStatus(mList[i].itemId.toInt(), mList[i].priorityListId)
+            adapter.notifyDataSetChanged()
+        }
+
+        dbHelper.updateListStatus(mList[0].priorityListId)
+        Toast.makeText(ActivityBase.activity, "No Item Left in List", Toast.LENGTH_LONG).show()
+        Handler(Looper.myLooper()!!).postDelayed({
+            getList()
+        }, 2000)
     }
 
     override fun onClickDone(position: Int) {
         mList[position].itemStatus = 1
-        dbHelper.updateStatus(mList[position].itemId.toInt(),mList[position].priorityListId)
-
-        if (mList.any { it.itemStatus != 0 }){
-            dbHelper.updateListStatus(mList[0].priorityListId)
-        }
+        dbHelper.updateStatus(mList[position].itemId.toInt(), mList[position].priorityListId)
         adapter.notifyDataSetChanged()
+        if (!mList.any { it.itemStatus != 0 }) {
+            dbHelper.updateListStatus(mList[0].priorityListId)
+            Toast.makeText(ActivityBase.activity, "No Item Left in List", Toast.LENGTH_LONG).show()
+            Handler(Looper.myLooper()!!).postDelayed({
+                getList()
+            }, 2000)
+        }
+
     }
 
     override fun onClickDelete(position: Int) {

@@ -45,9 +45,9 @@ class ListFragment : BaseFragment(), View.OnClickListener, ListAdapter.IListingL
         }
         else {
             binding.isData = true
-            list.sortBy { it.priority }
+            val temp = list.sortedByDescending { it.priority }
             mList.clear()
-            mList.addAll(list)
+            mList.addAll(temp)
             setAdapter()
         }
     }
@@ -66,14 +66,14 @@ class ListFragment : BaseFragment(), View.OnClickListener, ListAdapter.IListingL
 
     override fun onClick(v: View?) {
         when (v!!.id) {
-            R.id.rlAddItem -> {
-
+            R.id.rlCreateList -> {
+                callFragmentWithReplace(R.id.mainContainer, CreateEditListFragment.newInstance(0, "", false, false), "CreateEditListFragment")
             }
         }
     }
 
     override fun onClickDuplicate(position: Int) {
-        callFragmentWithReplace(R.id.mainContainer, CreateEditListFragment.newInstance(mList[position].priority, mList[position].listName, true, false), "CreateEditListFragment")
+        callFragmentWithReplace(R.id.mainContainer, CreateEditListFragment.newInstance(mList[position].priority, mList[position].listName, false, true), "CreateEditListFragment")
     }
 
     override fun onClickEdit(position: Int) {

@@ -20,8 +20,6 @@ import com.app.todolist.helper.BaseFragment
 import com.app.todolist.helper.DBHelper
 import com.app.todolist.model.ItemModel
 import com.app.todolist.model.ListModel
-import java.util.*
-import kotlin.collections.ArrayList
 
 class CreateEditListFragment : BaseFragment(), View.OnClickListener, ViewAdapter.IItemListener, TextWatcher {
 
@@ -37,14 +35,14 @@ class CreateEditListFragment : BaseFragment(), View.OnClickListener, ViewAdapter
         var listId = 0
         lateinit var listName: String
         var isUpdate: Boolean = false
-        var listUpdate: Boolean = false
+        var isDuplicate: Boolean = false
 
         fun newInstance(id: Int, name: String, isUp: Boolean, isList: Boolean): CreateEditListFragment {
             instance = CreateEditListFragment()
             listId = id
             listName = name
             isUpdate = isUp
-            listUpdate = isList
+            isDuplicate = isList
             return instance
         }
     }
@@ -59,7 +57,16 @@ class CreateEditListFragment : BaseFragment(), View.OnClickListener, ViewAdapter
     private fun setViews() {
         dbHelper = DBHelper(ActivityBase.activity)
 
-        if (isUpdate) {
+        if (isDuplicate) {
+            val tempList = ArrayList<ItemModel>()
+            tempList.addAll(dbHelper.getItems(listId))
+            tempList.map { it.itemStatus = 0 }
+            dbHelper.createList(ListModel(0, listName, 0))
+            val list = dbHelper.getList().sortedByDescending { it.priority }
+            listId = list[0].priority
+            dbHelper.createListItem(listId, tempList)
+
+            isUpdate = true
             binding.isData = true
             binding.etName.setText(listName)
             mList.clear()
@@ -67,9 +74,20 @@ class CreateEditListFragment : BaseFragment(), View.OnClickListener, ViewAdapter
             setAdapter()
         }
         else {
-            listId = 0
-            binding.isData = false
+            if (isUpdate) {
+                binding.isData = true
+                binding.etName.setText(listName)
+                mList.clear()
+                mList.addAll(dbHelper.getItems(listId))
+                setAdapter()
+            }
+            else {
+                listId = 0
+                binding.isData = false
+            }
         }
+
+
     }
 
     private fun setAdapter() {
@@ -92,7 +110,7 @@ class CreateEditListFragment : BaseFragment(), View.OnClickListener, ViewAdapter
         when (v!!.id) {
             R.id.btnAddItem -> {
                 if (validateInput()) {
-                    mList.add(ItemModel(listId,"", binding.etItemName.text.toString(), binding.etItemPrice.text.toString().toInt(), 0))
+                    mList.add(ItemModel(listId, "", binding.etItemName.text.toString(), binding.etItemPrice.text.toString().toInt(), 0))
                     if (mList.size == 1) {
                         binding.isData = true
                         setAdapter()
@@ -112,15 +130,25 @@ class CreateEditListFragment : BaseFragment(), View.OnClickListener, ViewAdapter
                     mList[itemPos].itemName = binding.etItemName.text.toString()
                     mList[itemPos].itemPrice = binding.etItemPrice.text.toString().toInt()
                     adapter.notifyDataSetChanged()
-                    if (isUpdate) {
-                        dbHelper.updateItem(mList[itemPos])
-                    }
+                    dbHelper.updateItem(mList[itemPos])
+                    binding.etItemName.setText("")
+                    binding.etItemPrice.setText("")
                 }
 
 
             }
             R.id.btnSaveList -> {
                 if (!TextUtils.isEmpty(binding.etName.text.toString())) {
+                    if (isUpdate) {
+                        if (listName != binding.etName.text.toString()) {
+                            dbHelper.updateListName(binding.etName.text.toString(), listId)
+                        }
+                        else {
+                            Toast.makeText(ActivityBase.activity, "List Saved", Toast.LENGTH_LONG).show()
+                            ActivityBase.activity.onBackPressed()
+                        }
+                    }
+                    else {
                         var status = 0
                         if (mList.any {
                                 it.itemStatus == 0
@@ -130,10 +158,14 @@ class CreateEditListFragment : BaseFragment(), View.OnClickListener, ViewAdapter
                         else {
                             status = 1
                         }
-                        dbHelper.createList(ListModel(0, binding.etName.text.toString(), status), mList)
+                        dbHelper.createList(ListModel(0, binding.etName.text.toString(), status))
+                        val list = dbHelper.getList().sortedByDescending { it.priority }
+                        listId = list[0].priority
+                        dbHelper.createListItem(listId, mList)
+                        Toast.makeText(ActivityBase.activity, "List Saved", Toast.LENGTH_LONG).show()
+                        ActivityBase.activity.onBackPressed()
+                    }
 
-                    Toast.makeText(ActivityBase.activity, "List Saved", Toast.LENGTH_LONG).show()
-                    ActivityBase.activity.onBackPressed()
                 }
                 else {
                     binding.etName.requestFocus()
@@ -146,7 +178,6 @@ class CreateEditListFragment : BaseFragment(), View.OnClickListener, ViewAdapter
     private fun checkAndSet() {
         if (TextUtils.isEmpty(binding.etItemName.text.toString())) {
             binding.btnAddItem.setBackgroundColor(ContextCompat.getColor(ActivityBase.activity, R.color.gray))
-            Toast.makeText(ActivityBase.activity, "Enter Item Name", Toast.LENGTH_LONG).show()
         }
         else if (TextUtils.isEmpty(binding.etItemPrice.text.toString())) {
             binding.btnAddItem.setBackgroundColor(ContextCompat.getColor(ActivityBase.activity, R.color.gray))
@@ -174,6 +205,7 @@ class CreateEditListFragment : BaseFragment(), View.OnClickListener, ViewAdapter
     }
 
     override fun onClickEdit(position: Int) {
+        binding.btnSaveItem.visibility = View.VISIBLE
         itemPos = position
         binding.etItemName.setText(mList[position].itemName)
         binding.etItemPrice.setText(mList[position].itemPrice.toString())

@@ -8,6 +8,7 @@ import androidx.databinding.DataBindingUtil
 import com.app.todolist.R
 import com.app.todolist.databinding.FragmentDashboardBinding
 import com.app.todolist.helper.BaseFragment
+import com.app.todolist.helper.Constants
 import com.app.todolist.helper.VPDashBoardAdapter
 
 class DashboardFragment : BaseFragment(), View.OnClickListener {
@@ -28,8 +29,8 @@ class DashboardFragment : BaseFragment(), View.OnClickListener {
         adapter.addFragment(HomeFragment(), "HomeFragment")
         adapter.addFragment(ListFragment(), "MyBlastFragment")
         binding.vpDash.adapter = adapter
-        binding.vpDash.setCurrentItem(0, true)
-
+        if (Constants.IS_HOME == 0) binding.rlHome.performClick()
+        else binding.rlList.performClick()
     }
 
     private fun initViews() {
@@ -45,10 +46,12 @@ class DashboardFragment : BaseFragment(), View.OnClickListener {
         when (v!!.id) {
             R.id.rlHome -> {
                 binding.isHome = true
+                Constants.IS_HOME = 0
                 binding.vpDash.setCurrentItem(0, true)
             }
             R.id.rlList -> {
                 binding.isHome = false
+                Constants.IS_HOME = 1
                 binding.vpDash.setCurrentItem(1, true)
             }
         }
